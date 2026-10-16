@@ -5,13 +5,13 @@ Họ tên: Nguyễn Tuấn Khanh
 
 | Mã | Setup | Tham số huấn luyện | VRAM đỉnh (GB) | Phút | F1 | CI95 | FP/ảnh | F1 pothole | F1 crack | F1 manhole |
 |---|---|---|---|---|---|---|---|---|---|---|
-| E0 | zero-shot | 0 | — | — | 0.0149 | [0.0031, 0.0289] | 0.264 | 0.0000 | 0.0162 | 0.0230 |
-| E1 | LoRA LLM | 33,030,144 | 5.868 | 48.29 | 0.0215 | [0.0078, 0.0407] | 0.495 | 0.0147 | 0.0094 | 0.0549 |
-| E2 | + projector | 87,609,344 | 6.074 | 47.73 | 0.0082 | [0.0000, 0.0192] | 0.457 | 0.0000 | 0.0046 | 0.0238 |
-| E3 | + LoRA ViT | 93,900,800 | 6.309 | 57.80 | 0.0025 | [0.0000, 0.0082] | 0.669 | 0.0000 | 0.0039 | 0.0000 |
-| E4 | (ghi biến và giá trị) | | | | | | | | | |
+| E0 | zero-shot | 0 | — | — | 0.0735 | [0.0494, 0.1040] | 1.074 | 0.1548 | 0.0190 | 0.1313 |
+| E1 | LoRA LLM | 33,030,144 | 5.868 | 46.03 | 0.2465 | [0.2122, 0.2828] | 1.534 | 0.1306 | 0.1926 | 0.5039 |
+| E2 | + projector | 87,609,344 | 6.074 | 45.45 | 0.0907 | [0.0673, 0.1167] | 1.916 | 0.1268 | 0.0282 | 0.2881 |
+| E3 | + LoRA ViT | 93,900,800 | 6.309 | 54.32 | 0.0633 | [0.0448, 0.0822] | 2.357 | 0.0745 | 0.0498 | 0.1036 |
+| E4 | LoRA LLM, rank 4/64 (dự kiến) | — | — | — | — | — | — | — | — | — |
 
-Ghi chú: các số lấy từ `report/evidence/e0.json`–`e3.json`; mỗi file có 311 ảnh test nhưng `missing_predictions` = 233. Vì vậy các F1 này phản ánh bộ dự đoán hiện có nhưng chưa phải đánh giá đầy đủ trên test. `parse_valid_rate` lần lượt là E0 0.2251, E1 0.2476, E2 0.1994, E3 0.1929. Riêng E1, `work/e1/run.json` ghi VRAM 7.932 GB và 48.62 phút, khác metadata trong evidence (5.868 GB và 48.29 phút); cần xác minh hai artifact thuộc cùng lần chạy trước khi nộp.
+Ghi chú: các số lấy từ `report/evidence/e0.json`–`e3.json`, cùng `dataset_version` `d10-21e4070301`; cả bốn evidence đều chấm đủ 311 ảnh (`missing_predictions` = 0). `parse_valid_rate` lần lượt là E0 0.9164, E1 0.9904, E2 0.8875, E3 0.8585. Tham số huấn luyện, VRAM và thời gian của E1–E3 lấy từ metadata trong evidence; E0 là zero-shot. E4 chưa có kết quả/evidence.
 
 ## 10 câu hỏi (trả lời bằng **số của bạn**, không chép lại tài liệu)
 
@@ -19,7 +19,7 @@ Ghi chú: các số lấy từ `report/evidence/e0.json`–`e3.json`; mỗi file
 Theo ước lượng kiến trúc trong GUIDE: LLM cùng embedding khoảng 4.0B tham số; ViT khoảng 415M, trong đó merger/projector khoảng 109M (merger khoảng 27M và deepstack mergers khoảng 82M); toàn mô hình khoảng 4.44B. E1 cập nhật LoRA của LLM; E2 cập nhật cùng LoRA LLM và projector; E3 cập nhật thêm LoRA trên ViT. Log thực tế ghi lần lượt 33,030,144, 87,609,344 và 93,900,800 tham số huấn luyện, với 252, 252 và 348 module LoRA mục tiêu. E2 − E1 là 54,579,200 tham số, thấp hơn ước lượng tăng khoảng 109M trong GUIDE; đây là sai khác giữa ước lượng và số trainable thực tế, không nên trình bày chúng như cùng một phép đo.
 
 ### Câu 2 — E0: `parse_valid_rate` bằng bao nhiêu, và hai lỗi phổ biến nhất của model gốc là gì (kèm một ví dụ output thô)?
-E0 có `parse_valid_rate` = 0.2251 (22.51%); đồng thời thiếu dự đoán ở 233/311 ảnh. Các lỗi nhìn thấy trong `work/e0.jsonl` là box crack quá rộng/sai vị trí và dự đoán trùng lặp. Ví dụ output thô hợp lệ về cú pháp nhưng box gần phủ hết chiều ngang ảnh: `{"image_id":"vlcsnap-00204","raw":"[{\"label\":\"crack\",\"bbox_2d\":[12,650,1000,700]}]"}`. Một ví dụ trùng lặp là ảnh `vlcsnap-2025-02-19-17h05m06s690`, nơi cùng box pothole `[112,624,157,657]` được trả về hai lần. Vì tỷ lệ thiếu dự đoán cao, đây là các lỗi tiêu biểu quan sát được, không phải thống kê tần suất trên toàn bộ 311 ảnh.
+E0 có `parse_valid_rate` = 0.9164 (91.64%) và không thiếu dự đoán nào trong 311 ảnh. Evidence ghi nhận 334 false positive và 548 false negative (FP/ảnh = 1.074); crack là lớp yếu nhất với F1 = 0.0190. Đây cho thấy nhiều dự đoán nhầm và bỏ sót, nhưng số liệu tổng hợp không phân biệt lỗi định vị với nhầm lớp. Evidence JSON không lưu raw output, nên tôi không trích một dòng JSON thô chưa được xác minh. Sáu hình minh hoạ E0 bên dưới cho thấy các ví dụ dự đoán/ground truth; không nên suy rộng các hình này thành tần suất lỗi trên toàn bộ tập.
 
 ### Câu 3 — Thang 0–1000: nếu chấm output theo pixel (hoặc ngược lại) thì F1 ra sao và vì sao? Bạn đã kiểm chứng điều này thế nào?
 Mô hình sử dụng hệ tọa độ chuẩn hóa norm1000, trong đó mỗi tọa độ nằm trong khoảng 0–1000, với 0 là mép trái/trên và 1000 là mép phải/dưới ảnh. Khi đánh giá, nếu tọa độ pixel bị hiểu nhầm là norm1000 hoặc ngược lại, bounding box dự đoán và ground truth sẽ không cùng hệ quy chiếu, khiến IoU giảm mạnh và F1 có thể giảm đáng kể, thậm chí gần 0. Ngược lại, nếu chuyển đổi nhất quán cả dự đoán và ground truth giữa hai hệ tọa độ, IoU về lý thuyết sẽ được bảo toàn, ngoại trừ sai số nhỏ do làm tròn.
@@ -47,27 +47,25 @@ Các frame gần nhau trong cùng phiên thường gần như trùng cảnh. Chi
 | Test | 311 | 121 | 299 | 163 |
 
 ### Câu 7 — So sánh E1/E2/E3: mở projector và LoRA trên ViT có đáng không (F1, CI95, VRAM, thời gian)?
-Trong các lần chạy được chấm, E1 tốt nhất nhưng F1 chỉ 0.0215 (CI95 [0.0078, 0.0407]). E2 giảm xuống 0.0082 ([0.0000, 0.0192]) với 6.074 GB và 47.73 phút; E3 giảm tiếp xuống 0.0025 ([0.0000, 0.0082]) với 6.309 GB và 57.80 phút. So với E1, E2 không tăng thời gian đáng kể nhưng tốn thêm khoảng 0.206 GB và F1 thấp hơn; E3 tốn thêm khoảng 0.441 GB và 9.51 phút nhưng F1 thấp hơn nhiều. Dựa trên các số này, mở projector/LoRA ViT chưa đáng; tuy nhiên, 233 dự đoán bị thiếu ở mỗi evidence khiến kết luận về chất lượng mô hình chưa đáng tin cho đến khi chạy lại đầy đủ.
+E1 đạt F1 = 0.2465 (CI95 [0.2122, 0.2828]), cao nhất. E2 giảm xuống 0.0907 ([0.0673, 0.1167]) với 6.074 GB và 45.45 phút; E3 đạt 0.0633 ([0.0448, 0.0822]) với 6.309 GB và 54.32 phút. So với E1, E2 tốn thêm 0.206 GB nhưng có thời gian tương đương và F1 thấp hơn; E3 tốn thêm 0.441 GB, thêm 8.29 phút và F1 cũng thấp hơn đáng kể. Theo các kết quả hiện có, việc mở projector/LoRA ViT không đem lại lợi ích; cả ba setup đều được chấm đủ 311 ảnh, nên so sánh này không còn bị giới hạn bởi dự đoán bị thiếu.
 
 ### Câu 8 — Tập test có 311 ảnh: khoảng tin cậy rộng thế nào, và điều đó giới hạn kết luận so sánh các setup ra sao?
-CI95 của F1 là E0 [0.0031, 0.0289] (độ rộng 0.0258), E1 [0.0078, 0.0407] (0.0329), E2 [0.0000, 0.0192] (0.0192), E3 [0.0000, 0.0082] (0.0082). Các khoảng chồng lấp; do đó chưa có cơ sở kết luận chắc chắn setup nào hơn setup khác chỉ từ các F1 điểm. CI trong evidence là bootstrap 1,000 lần theo ảnh; để so sánh cặp chặt chẽ hơn cần bootstrap chênh lệch F1 theo cùng các ảnh. Hơn nữa, thiếu 233 dự đoán mỗi lần chạy làm giảm mạnh giá trị kết luận từ CI hiện tại.
+CI95 của F1 là E0 [0.0494, 0.1040] (độ rộng 0.0547), E1 [0.2122, 0.2828] (0.0705), E2 [0.0673, 0.1167] (0.0494), E3 [0.0448, 0.0822] (0.0374). CI trong evidence được bootstrap 1,000 lần theo ảnh. CI của E1 tách khỏi CI của E0, E2 và E3; CI E0/E2/E3 có phần chồng lấp. Điều này ủng hộ kết quả E1 tốt hơn, nhưng so sánh CI riêng không thay thế kiểm định cặp; nên bootstrap chênh lệch F1 trên cùng ảnh test để đánh giá trực tiếp. Evidence bao phủ đầy đủ 311 ảnh, nhưng CI vẫn thể hiện độ bất định khi khái quát từ tập test hữu hạn.
 
 ### Câu 9 — Phân tích lỗi theo lớp: lớp nào kém nhất và vì sao (kích thước box, số mẫu, ngữ nghĩa)? Kèm ảnh minh hoạ.
-Không có một lớp kém nhất ổn định ở mọi setup: pothole có F1 = 0 ở E0/E2/E3; crack thấp nhất ở E1/E2/E3 nếu xét lớp có F1 khác 0 (E1 0.0094, E2 0.0046, E3 0.0039); manhole là lớp tốt nhất của E0/E1/E2 nhưng E3 không có true positive. Test có 121 box pothole, 299 crack và 163 manhole; crack có nhiều box nhất nhưng vẫn có 126 false positive ở E1, cho thấy số mẫu đơn thuần không giải thích được lỗi. Các output E0 có box crack quá rộng và box lặp, phù hợp với lỗi định vị/đếm; crack mảnh và dài cũng nhạy với ngưỡng IoU 0.5. Evidence chưa phân loại được nhầm lẫn ngữ nghĩa giữa các lớp. Sáu ví dụ E0 dưới đây dùng GT màu xanh lá và dự đoán màu đỏ:
+Không có một lớp kém nhất ở mọi setup: crack thấp nhất ở E0 (F1 = 0.0190), E2 (0.0282) và E3 (0.0498); pothole thấp nhất ở E1 (0.1306). Pothole có F1 cao nhất ở E0 (0.1548), còn manhole cao nhất ở E1/E2/E3 (0.5039, 0.2881, 0.1036). Test có 121 box pothole, 299 crack và 163 manhole. Crack có số box nhiều nhất nhưng cũng có nhiều false positive nhất trong mọi setup (E0 221, E1 339, E2 539, E3 524); số lượng mẫu đơn thuần không giải thích được hiệu năng. Kết quả cho thấy vấn đề precision/định vị đáng kể, nhưng evidence tổng hợp không xác định nguyên nhân ngữ nghĩa hay kích thước box cụ thể. Sáu ví dụ E0 dưới đây dùng GT màu xanh lá và dự đoán màu đỏ:
 
 <p><img src="figures/e0_example_1_vlcsnap-2025-02-18-23h13m50s113.jpg" width="32%" alt="E0 matched example"><img src="figures/e0_example_2_vlcsnap-2025-02-18-23h08m10s837.jpg" width="32%" alt="E0 duplicate box example"><img src="figures/e0_example_3_vlcsnap-00204.jpg" width="32%" alt="E0 oversized box example"></p>
 <p><img src="figures/e0_example_4_vlcsnap-00200.jpg" width="32%" alt="E0 false positive example"><img src="figures/e0_example_5_vlcsnap-00201.jpg" width="32%" alt="E0 missed detection example"><img src="figures/e0_example_6_vlcsnap-00208.jpg" width="32%" alt="E0 mixed error example"></p>
 
 ### Câu 10 — E4: bạn đổi biến nào, kết quả thế nào, và kết luận có đáng tin không?
-Tôi chọn đổi biến LoRA rank, so sánh hai giá trị rank = 4 và rank = 64, sử dụng setup E1 làm baseline và seed 42. Theo thiết kế, LoRA alpha cần bằng 2 × rank, tương ứng alpha = 8 và alpha = 128.
+Notebook cấu hình E4 để thay đổi LoRA rank, so sánh rank = 4 và rank = 64 trên baseline E1, với seed 42; alpha được đặt bằng 2 × rank, tương ứng 8 và 128. Tuy nhiên, notebook không tạo được kết quả E4 có thể chấm: không có evidence `e4_rank_4.json`/`e4_rank_64.json`, và artifact `work/e4_rank_4/run.json` bị thiếu khi cell xử lý E4 được chạy.
 
-Tuy nhiên, thí nghiệm E4 chưa chạy thành công nên chưa tạo được hai file evidence e4_rank_4.json và e4_rank_64.json.
-
-Vì chưa có kết quả F1 và CI95 của E4 nên chưa thể kết luận rank 4 hay rank 64 tốt hơn, cũng chưa thể đánh giá mức cải thiện so với E1. Độ tin cậy của đánh giá hiện tại còn hạn chế vì tập test chỉ có 311 ảnh và evidence E0–E3 đều thiếu dự đoán ở 233 ảnh mỗi lần chạy. Cần hoàn thành cả hai lần chạy với cùng tập test, kiểm tra số dự đoán hợp lệ và tính CI95 để có thể đưa ra kết luận.
+Do đó chưa có F1/CI95 cho hai rank và không thể kết luận rank nào tốt hơn E1. Cần hoàn tất cả hai lần chạy, xác nhận đủ 311 dự đoán cho mỗi lần và xuất evidence trước khi so sánh.
 
 ## Nhìn lại
-Qua các thí nghiệm E0–E3, có thể thấy F1 của mô hình còn thấp và tỷ lệ dự đoán thiếu khá cao: E1 đạt F1 = 0.0215, cao nhất trong các cấu hình được đánh giá, nhưng chưa đủ cơ sở để khẳng định đây là cấu hình tốt nhất một cách chắc chắn vì các khoảng tin cậy CI95 chồng lấp và evidence còn thiếu dự đoán. Một vấn đề quan trọng là phân biệt lỗi của mô hình với lỗi trong quá trình sinh output, phân tích JSON và chấm bounding box.
+Qua các thí nghiệm E0–E3, E1 đạt F1 = 0.2465, cao hơn rõ rệt các cấu hình còn lại trên cùng 311 ảnh test; CI95 của E1 không chồng lấp với CI của E0, E2 hoặc E3. Dù vậy, hiệu năng tuyệt đối vẫn còn hạn chế (E1 có 477 false positive và 434 false negative), nên cần xem xét cả precision/recall và lỗi theo lớp, không chỉ F1. `parse_valid_rate` cao và không có dự đoán thiếu ở các evidence mới giúp tách rõ hơn lỗi định dạng khỏi lỗi định vị/phân loại.
 
 Trong quá trình triển khai E2 và E3, tôi gặp lỗi không tương thích dtype giữa FP16 và FP32 khi huấn luyện projector và LoRA trên nhánh ViT. Các tham số huấn luyện cần giữ FP32, trong khi một số gradient sinh ra dưới dạng FP16 trong quá trình mixed-precision training, gây lỗi khi cập nhật trọng số. Tôi đã bổ sung bước kiểm tra dtype và chuyển gradient về FP32 trước khi unscale và cập nhật optimizer.
 
-Bài học rút ra: cần kiểm tra kỹ dtype của tham số và gradient khi kết hợp FP16 với FP32, đặc biệt ở projector và ViT; đồng thời xác minh log huấn luyện và đánh giá trên đầy đủ ảnh test trước khi kết luận hiệu quả của mô hình.
+Bài học rút ra: cần kiểm tra kỹ dtype của tham số và gradient khi kết hợp FP16 với FP32, đặc biệt ở projector và ViT; lưu đủ artifact của mỗi lần chạy; đồng thời xác minh evidence bao phủ toàn bộ ảnh test và tính so sánh thống kê phù hợp trước khi kết luận hiệu quả của mô hình.
